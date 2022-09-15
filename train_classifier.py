@@ -19,26 +19,26 @@ from sklearn.metrics import classification_report, f1_score, precision_score, re
 def load_data(database_filepath):
     '''
     database_filepath - path to database (.db file) to query data from
-    
+
     Returns:
     X - input variables, which are lines of text to be processed via TF-IDF
     Y - multiple binary classification variables that show whether or not text is classified
         under a given category
     '''
-    
+
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql('SELECT * FROM disaster_responses', con=engine)
     X = df['message']
     Y = df.drop(columns=['id', 'message', 'original', 'genre'])
     category_names = list(Y.columns)
-    
+
     return X, Y, category_names
 
 def tokenize(text):
     '''
     Lemmatizes and cleans text, then returns tokens to be processed and modeled
     '''
-    
+
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -53,15 +53,20 @@ def tokenize(text):
 def build_model():
     '''
     Builds and returns machine learning model pipeline that processes text counts through TF-IDF,
-    then runs random forest model to classify data under multiple categories
+    then runs random forest model to classify data under multiple categories.
     '''
-    
+
     pipeline = Pipeline([
             ('vect', CountVectorizer(tokenizer=tokenize)),
             ('tfidf', TfidfTransformer()),
             ('moc_rf', MultiOutputClassifier(RandomForestClassifier())),
         ])
-    return pipeline
+
+    # Sets up grid search over min_samples_leaf hyperparameter to optimize model
+    parameters = {'moc_rf__estimator__min_samples_leaf': [1, 2, 3]}
+    cv = GridSearchCV(pipeline, param_grid=parameters)
+
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
@@ -69,13 +74,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Calculates predicted classification values using machine learning model, then prints out
     precision, recall and F1-score values for each category in DataFrame table
     '''
-    
+
     Y_pred = pd.DataFrame(model.predict(X_test), columns=category_names)
-    
+
     scores = {}
     for col in Y.columns:
         scores[col] = classification_report(Y_test[col], Y_pred[col], output_dict=True)['weighted avg']
-    
+
     print(pd.DataFrame(scores))
 
 def save_model(model, model_filepath):
@@ -88,13 +93,13 @@ def main():
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
+
         print('Building model...')
         model = build_model()
-        
+
         print('Training model...')
         model.fit(X_train, Y_train)
-        
+
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
 
