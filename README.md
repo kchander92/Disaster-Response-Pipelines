@@ -1,6 +1,9 @@
 # Summary
 In this project, I use ETL and ML pipelines to clean, process and classify text messages sent during disaster events into multiple categories pertaining to disaster response.
 
+# Installations
+Install Scikit-Learn 0.24.
+
 # File Description
 - disaster_categories.csv - Contains data on disaster response categories and how text messages by ID are classified for them
 - disaster_messages.csv - Contains list of texts sent during disaster events listed by ID
@@ -11,3 +14,6 @@ In this project, I use ETL and ML pipelines to clean, process and classify text 
 # Instructions
 1. To process the data, open the Terminal and run the command "python process_data.py disaster_messages.csv disaster_categories.csv DisasterResponse.db".
 2. To create and run the ML pipeline, run the command "python train_classifier.py DisasterResponse.db classifier.pkl".
+
+# Acknowledgments
+Thanks to [Appen](https://appen.com/) for supplying the data for the Disaster Response Project.
